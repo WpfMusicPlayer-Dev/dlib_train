@@ -31,12 +31,35 @@ using song_net = dlib::loss_multiclass_log<
     dlib::input<song_sample_type>
     >>>>>>;
 
-
 struct TrainingRow {
     std::string label;
     std::string text;
 };
 
+static const std::unordered_map<std::string, unsigned long> line_table = {
+    {"zh", 0},
+    {"jp", 1},
+    {"kr", 2},
+    {"en", 3},
+    {"jyut", 4},
+    {"roma", 5},
+    {"onomatopoeia", 6}
+};
+
+static const std::unordered_map<std::string, unsigned long> song_table = {
+    {"zh_only", 0},
+    {"jp_only", 1},
+    {"kr_only", 2},
+    {"en_only", 3},
+    {"jp_zh_trans", 4},
+    {"jp_roma", 5},
+    {"en_zh_trans", 6},
+    {"kr_zh_trans", 7},
+    {"kr_roma", 8},
+    {"zh_jyut", 9},
+    {"jp_zh_trans_roma", 10},
+    {"kr_zh_trans_roma", 11}
+};
 
 void build_vocab(const std::vector<TrainingRow>& data, std::unordered_map<std::string, int>& vocab)
 {
@@ -78,39 +101,19 @@ std::vector<double> extract_features(const std::string& text, const std::unorder
 }
 inline unsigned long label_to_id(const std::string& label)
 {
-    static const std::unordered_map<std::string, unsigned long> table = {
-        {"zh", 0},
-        {"jp", 1},
-        {"kr", 2},
-        {"en", 3},
-        {"jyut", 4},
-        {"roma", 5},
-        {"onomatopoeia", 6}
-    };
-
-    auto it = table.find(label);
-    if (it != table.end())
+    auto it = line_table.find(label);
+    if (it != line_table.end())
         return it->second;
 
     return 6;
 }
 
-inline std::string id_to_label(unsigned long id) {
-
-    static const std::unordered_map<std::string, unsigned long> table = {
-        {"zh", 0},
-        {"jp", 1},
-        {"kr", 2},
-        {"en", 3},
-        {"jyut", 4},
-        {"roma", 5},
-        {"onomatopoeia", 6}
-    };
-
-    auto it = std::find_if(table.begin(), table.end(), [id](const std::pair<std::string, unsigned long>& key) -> bool {
+inline std::string id_to_label(unsigned long id) 
+{
+    auto it = std::find_if(line_table.begin(), line_table.end(), [id](const std::pair<std::string, unsigned long>& key) -> bool {
         return key.second == id;
     });
-    if (it != table.end())
+    if (it != line_table.end())
         return it->first;
 
     return "unknown";
@@ -319,23 +322,7 @@ void song_train()
         auto feat = extract_song_features(seq);
 
         samples.push_back(feat);
-
-        static std::unordered_map<std::string, unsigned long> table = {
-            {"zh_only", 0},
-            {"jp_only", 1},
-            {"kr_only", 2},
-            {"en_only", 3},
-            {"jp_zh_trans", 4},
-            {"jp_roma", 5},
-            {"en_zh_trans", 6},
-            {"kr_zh_trans", 7},
-            {"kr_roma", 8},
-            {"zh_jyut", 9},
-            {"jp_zh_trans_roma", 10},
-            {"kr_zh_trans_roma", 11}
-        };
-
-        labels.push_back(table[label]);
+        labels.push_back(song_table.at(label));
     }
 
     song_net net;
