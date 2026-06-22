@@ -14,8 +14,8 @@
 using line_sample_type = dlib::matrix<double, 0, 1>;
 using song_sample_type = dlib::matrix<double>;
 
-const int NUM_CLASSES = 7;
-const int NUM_TYPES = 12;
+const int NUM_CLASSES = 8;
+const int NUM_TYPES = 14;
 
 using line_net = dlib::loss_multiclass_log<
     dlib::fc<NUM_CLASSES,
@@ -40,25 +40,28 @@ static const std::unordered_map<std::string, unsigned long> line_table = {
     {"zh", 0},
     {"jp", 1},
     {"kr", 2},
-    {"en", 3},
-    {"jyut", 4},
-    {"roma", 5},
-    {"onomatopoeia", 6}
+    {"latin", 3}, // en, fr, itai, es, etc -> mapped to latin
+    {"ru", 4}, // add russian support.
+    {"jyut", 5},
+    {"roma", 6},
+    {"onomatopoeia", 7}
 };
 
 static const std::unordered_map<std::string, unsigned long> song_table = {
     {"zh_only", 0},
     {"jp_only", 1},
     {"kr_only", 2},
-    {"en_only", 3},
-    {"jp_zh_trans", 4},
-    {"jp_roma", 5},
-    {"en_zh_trans", 6},
-    {"kr_zh_trans", 7},
-    {"kr_roma", 8},
-    {"zh_jyut", 9},
-    {"jp_zh_trans_roma", 10},
-    {"kr_zh_trans_roma", 11}
+    {"latin_only", 3},
+    {"ru_only", 4},
+    {"jp_zh_trans", 5},
+    {"jp_roma", 6},
+    {"latin_zh_trans", 7},
+    {"ru_zh_trans", 8},
+    {"kr_zh_trans", 9},
+    {"kr_roma", 10},
+    {"zh_jyut", 11},
+    {"jp_zh_trans_roma", 12},
+    {"kr_zh_trans_roma", 13}
 };
 
 void build_vocab(const std::vector<TrainingRow>& data, std::unordered_map<std::string, int>& vocab)
@@ -204,7 +207,13 @@ void line_reasoning()
         "to u ri a me ko ko ro mo yo u se tsu na no de a i",
         "kyo ku: Aiobahn",
         "啊啊",
-        "zu tto"
+        "zu tto",
+        "Quand il me prend dans ses bras",
+        "Lorem ipsum dolor sit amet",
+        "Симпа па па полюбила",
+        "Парней она манила",
+        "Бродягу полюбила",
+        "Она его половина"
     };
     for (const auto& test_case : test_cases) {
         auto feat = extract_features(test_case, vocab_reasoning);
@@ -220,8 +229,8 @@ void line_reasoning()
 // 构建特征向量
 dlib::matrix<double> extract_song_features(const std::vector<std::string>& seq)
 {
-    const int LANGS = 7; // zh jp kr en jyut roma ono
-    song_sample_type feat(67, 1); 
+    const int LANGS = 8; // zh jp kr latin jyut roma ono
+    song_sample_type feat(84, 1); 
     feat = 0;
 
     // 语言计数
@@ -231,24 +240,25 @@ dlib::matrix<double> extract_song_features(const std::vector<std::string>& seq)
         if (s == "zh") count[0]++;
         else if (s == "jp") count[1]++;
         else if (s == "kr") count[2]++;
-        else if (s == "en") count[3]++;
-        else if (s == "jyut") count[4]++;
-        else if (s == "roma") count[5]++;
-        else count[6]++; // onomatopoeia
+        else if (s == "latin") count[3]++;
+        else if (s == "ru") count[4]++;
+        else if (s == "jyut") count[5]++;
+        else if (s == "roma") count[6]++;
+        else count[7]++; // onomatopoeia
     }
 
     int idx = 0;
 
-    // 语言计数（7维）
+    // 语言计数（8维）
     for (int i = 0; i < LANGS; i++)
         feat(idx++) = count[i];
 
-    // 语言比例（7维）
+    // 语言比例（8维）
     double total = seq.size();
     for (int i = 0; i < LANGS; i++)
         feat(idx++) = count[i] / total;
 
-    // bigram矩阵（49维）
+    // bigram矩阵（64维）
     std::vector<std::vector<int>> trans(LANGS, std::vector<int>(LANGS, 0));
     for (size_t i = 1; i < seq.size(); i++)
     {
@@ -259,10 +269,11 @@ dlib::matrix<double> extract_song_features(const std::vector<std::string>& seq)
             if (s == "zh") return 0;
             if (s == "jp") return 1;
             if (s == "kr") return 2;
-            if (s == "en") return 3;
-            if (s == "jyut") return 4;
-            if (s == "roma") return 5;
-            return 6;
+            if (s == "latin") return 3;
+            if (s == "ru") return 4;
+            if (s == "jyut") return 5;
+            if (s == "roma") return 6;
+            return 7;
             };
 
         trans[id(prev)][id(curr)]++;
@@ -342,7 +353,7 @@ void song_reasoning()
     song_net net;
     dlib::deserialize("song_structure_mlp.dat") >> net;
 
-    std::vector<std::string> seq = { "en", "zh", "en", "zh", "onomatopoeia", "zh", "onomatopoeia", "onomatopoeia", "en", "zh" };
+    std::vector<std::string> seq = { "latin", "zh", "latin", "zh", "onomatopoeia", "zh", "onomatopoeia", "onomatopoeia", "latin", "zh" };
 
     auto feat = extract_song_features(seq);
     int id = net(feat);

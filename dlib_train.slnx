@@ -4,5 +4,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="dlib_train/dlib_train.vcxproj" Id="e40dc7c1-591d-450e-a7c9-7efec53f552d" />
+  <Project Path="dlib_train/dlib_train.vcxproj"/>
 </Solution>
