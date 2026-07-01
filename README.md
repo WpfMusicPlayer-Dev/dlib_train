@@ -6,14 +6,14 @@ scripts for [WpfMusicPlayer](https://github.com/WpfMusicPlayer-Dev/WpfMusicPlaye
 
 specialized for CJK lyrics.
 
-line_net can detect language type (7 types):
+line_net can detect language type (8 types):
 
-zh, en, jp, kr, jyut, roma, onomatopoeia
+zh, latin, jp, kr, jyut, roma, onomatopoeia
 
-song_net can detected language classification (12 types):
+song_net can detected language classification (14 types):
 
-- 1-lang only: zh_only, en_only, jp_only, kr_only
-- 2-lang combination: en_zh_trans, jp_zh_trans, kr_zh_trans, jp_roma, kr_roma, zh_jyut
+- 1-lang only: zh_only, latin_only, jp_only, kr_only, ru_only
+- 2-lang combination: latin_zh_trans, jp_zh_trans, kr_zh_trans, ru_zh_trans, jp_roma, kr_roma, zh_jyut
 - 3-lang combination: jp_zh_trans_roma, kr_zh_trans_roma 
 
 ### how to build & train?
